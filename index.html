@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dortmunder Stadtteile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+    .leaflet-container {
+      background: #eef;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map("map").setView([51.513, 7.465], 11); // Dortmund
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap",
+    }).addTo(map);
+
+    // Farben
+    function getColor(name) {
+      return {
+        "Huckarde": "#f94144",
+        "Mengede": "#f3722c",
+        "Lüttgendortmund": "#f9c74f",
+        "Hombruch": "#90be6d",
+        "Aplerbeck": "#43aa8b",
+        "Brackel": "#577590",
+        "Eving": "#4d908e",
+        "Innenstadt-West": "#277da1",
+        "Innenstadt-Ost": "#f9844a",
+        "Innenstadt-Nord": "#f8961e",
+        "Scharnhorst": "#f9c74f",
+        "Hörde": "#90be6d"
+      }[name] || "#ccc";
+    }
+
+    // Stil-Definition
+    function style(feature) {
+      return {
+        fillColor: getColor(feature.properties.Stadtteil),
+        weight: 2,
+        opacity: 1,
+        color: "#333",
+        fillOpacity: 0.5
+      };
+    }
+
+    // Hover-Effekt
+    function highlightFeature(e) {
+      const layer = e.target;
+      layer.setStyle({
+        weight: 3,
+        color: "#000",
+        fillOpacity: 0.7
+      });
+      layer.bringToFront();
+    }
+
+    function resetHighlight(e) {
+      geojson.resetStyle(e.target);
+    }
+
+    // Klick: Weiterleitung
+    function onFeatureClick(e) {
+      const stadtteil = e.target.feature.properties.Stadtteil;
+      const ziel = `/stadtteile/${stadtteil.toLowerCase().replace(/\s/g, "-")}`;
+      window.location.href = ziel;
+    }
+
+    function onEachFeature(feature, layer) {
+      layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: onFeatureClick
+      });
+      layer.bindTooltip(feature.properties.Stadtteil);
+    }
+
+    let geojson;
+
+    fetch("stadtteile.geojson")
+      .then((res) => res.json())
+      .then((data) => {
+        geojson = L.geoJSON(data, {
+          style: style,
+          onEachFeature: onEachFeature
+        }).addTo(map);
+      });
+  </script>
+</body>
+</html>
